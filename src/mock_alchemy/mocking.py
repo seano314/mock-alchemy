@@ -731,7 +731,7 @@ class AsyncAlchemyMagicMock(mock.AsyncMock):
     def __init__(self, *args, **kwargs) -> None:
         """Creates AlchemyMagicMock that can be used as limited SQLAlchemy session."""
         kwargs.setdefault("__name__", "Session")
-        super(AlchemyMagicMock, self).__init__(*args, **kwargs)
+        super(AsyncAlchemyMagicMock, self).__init__(*args, **kwargs)
 
     async def _format_mock_call_signature(self, args: Any, kwargs: Any) -> str:
         """Formats the mock call into a string."""
@@ -742,7 +742,7 @@ class AsyncAlchemyMagicMock(mock.AsyncMock):
     async def assert_called_with(self, *args: Any, **kwargs: Any) -> None:
         """Assert for a specific call to have happened."""
         args, kwargs = sqlalchemy_call(mock.call(*args, **kwargs))
-        return awaitsuper(AlchemyMagicMock, self).assert_called_with(*args, **kwargs)
+        return await super(AsyncAlchemyMagicMock, self).assert_called_with(*args, **kwargs)
 
     async def assert_any_call(self, *args: Any, **kwargs: Any) -> None:
         """Assert for a specific call to have happened."""
@@ -752,7 +752,7 @@ class AsyncAlchemyMagicMock(mock.AsyncMock):
             "call_args_list",
             [sqlalchemy_call(i) for i in self.call_args_list],
         ):
-            return await super(AlchemyMagicMock, self).assert_any_call(*args, **kwargs)
+            return await super(AsyncAlchemyMagicMock, self).assert_any_call(*args, **kwargs)
 
     async def assert_has_calls(self, calls: List[Call], any_order: bool = False) -> None:
         """Assert for a list of calls to have happened."""
@@ -762,7 +762,7 @@ class AsyncAlchemyMagicMock(mock.AsyncMock):
             "mock_calls",
             type(self.mock_calls)([sqlalchemy_call(i) for i in self.mock_calls]),
         ):
-            return await super(AlchemyMagicMock, self).assert_has_calls(calls, any_order)
+            return await super(AsyncAlchemyMagicMock, self).assert_has_calls(calls, any_order)
 
 
 class AsyncUnifiedAlchemyMagicMock(AsyncAlchemyMagicMock):
