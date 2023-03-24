@@ -863,21 +863,21 @@ class AsyncUnifiedAlchemyMagicMock(AsyncAlchemyMagicMock):
 
         super(AsyncUnifiedAlchemyMagicMock, self).__init__(*args, **kwargs)
 
-    async def _get_previous_calls(self, calls: Sequence[Call]) -> Iterator:
+    def _get_previous_calls(self, calls: Sequence[Call]) -> Iterator:
         """Gets the previous calls on the same line."""
         # the calls that end lines
         call_enders = list(self.boundary.keys()) + ["delete"]
-        return await iter(takewhile(lambda i: i[0] not in call_enders, reversed(calls)))
+        return iter(takewhile(lambda i: i[0] not in call_enders, reversed(calls)))
 
-    async def _get_previous_call(self, name: str, calls: Sequence[Call]) -> Optional[Call]:
+    def _get_previous_call(self, name: str, calls: Sequence[Call]) -> Optional[Call]:
         """Gets the previous call right before the current call."""
         # get all previous session calls within same session query
-        previous_calls = await self._get_previous_calls(calls)
+        previous_calls = self._get_previous_calls(calls)
 
         # skip last call
         next(previous_calls)
 
-        return await next(iter(filter(lambda i: i[0] == name, previous_calls)), None)
+        return next(iter(filter(lambda i: i[0] == name, previous_calls)), None)
 
     @overload
     def _unify(
