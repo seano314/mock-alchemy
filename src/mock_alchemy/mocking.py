@@ -863,13 +863,13 @@ class AsyncUnifiedAlchemyMagicMock(AsyncAlchemyMagicMock):
 
         super(AsyncUnifiedAlchemyMagicMock, self).__init__(*args, **kwargs)
 
-    async def _get_previous_calls(self, calls: Sequence[Call]) -> Iterator:
+    def _get_previous_calls(self, calls: Sequence[Call]) -> Iterator:
         """Gets the previous calls on the same line."""
         # the calls that end lines
         call_enders = list(self.boundary.keys()) + ["delete"]
-        return await iter(takewhile(lambda i: i[0] not in call_enders, reversed(calls)))
+        return iter(takewhile(lambda i: i[0] not in call_enders, reversed(calls)))
 
-    async def _get_previous_call(self, name: str, calls: Sequence[Call]) -> Optional[Call]:
+    def _get_previous_call(self, name: str, calls: Sequence[Call]) -> Optional[Call]:
         """Gets the previous call right before the current call."""
         # get all previous session calls within same session query
         previous_calls = self._get_previous_calls(calls)
@@ -877,7 +877,7 @@ class AsyncUnifiedAlchemyMagicMock(AsyncAlchemyMagicMock):
         # skip last call
         next(previous_calls)
 
-        return await next(iter(filter(lambda i: i[0] == name, previous_calls)), None)
+        return next(iter(filter(lambda i: i[0] == name, previous_calls)), None)
 
     @overload
     def _unify(
@@ -895,11 +895,11 @@ class AsyncUnifiedAlchemyMagicMock(AsyncAlchemyMagicMock):
         _mock_name = kwargs.pop("_mock_name")
         submock = getattr(self, _mock_name)
 
-        previous_method_call = await self._get_previous_call(_mock_name, self.method_calls)
-        previous_mock_call = await self._get_previous_call(_mock_name, self.mock_calls)
+        previous_method_call = self._get_previous_call(_mock_name, self.method_calls)
+        previous_mock_call = self._get_previous_call(_mock_name, self.mock_calls)
 
         if previous_mock_call is None:
-            return await submock.return_value
+            return submock.return_value
 
         # remove immediate call from both filter mock as well as the parent mock object
         # as it already registered in self.__call__ before this side-effect is call
@@ -935,10 +935,10 @@ class AsyncUnifiedAlchemyMagicMock(AsyncAlchemyMagicMock):
         _mock_data = self._mock_data
         if _mock_data is not None:
             previous_calls = [
-                await sqlalchemy_call(
+                sqlalchemy_call(
                     i, with_name=True, base_call=self.unify.get(i[0]) or Call
                 )
-                for i in await self._get_previous_calls(self.mock_calls[:-1])
+                for i in self._get_previous_calls(self.mock_calls[:-1])
             ]
             sorted_mock_data = sorted(_mock_data, key=lambda x: len(x[0]), reverse=True)
             if _mock_name == "get":
@@ -957,7 +957,7 @@ class AsyncUnifiedAlchemyMagicMock(AsyncAlchemyMagicMock):
             else:
                 for calls, result in sorted_mock_data:
                     calls = [
-                        await sqlalchemy_call(
+                        sqlalchemy_call(
                             i,
                             with_name=True,
                             base_call=self.unify.get(i[0]) or Call,
@@ -967,7 +967,7 @@ class AsyncUnifiedAlchemyMagicMock(AsyncAlchemyMagicMock):
                     if all(c in previous_calls for c in calls):
                         return self.boundary[_mock_name](result, *args, **kwargs)
 
-        return self.boundary[_mock_name](_mock_default, *args, **kwargs)
+        return await self.boundary[_mock_name](_mock_default, *args, **kwargs)
 
     async def _mutate_data(self, *args: Any, **kwargs: Any) -> Optional[int]:
         """Alter the data for the SQLAlchemy expression."""
@@ -991,7 +991,7 @@ class AsyncUnifiedAlchemyMagicMock(AsyncAlchemyMagicMock):
             _kwargs["_mock_name"] = "add"
 
             for i in to_add:
-                await self._mutate_data(i, *args[1:], **_kwargs)
+                self._mutate_data(i, *args[1:], **_kwargs)
         # delete case
         else:
             _kwargs = kwargs.copy()
@@ -1001,7 +1001,7 @@ class AsyncUnifiedAlchemyMagicMock(AsyncAlchemyMagicMock):
             _mock_data = self._mock_data
             num_deleted = 0
             previous_calls = [
-                await sqlalchemy_call(
+                sqlalchemy_call(
                     i, with_name=True, base_call=self.unify.get(i[0]) or Call
                 )
                 for i in self._get_previous_calls(self.mock_calls[:-1])
@@ -1025,4 +1025,4 @@ class AsyncUnifiedAlchemyMagicMock(AsyncAlchemyMagicMock):
                 else:
                     temp_mock_data.append((calls, result))
             self._mock_data = temp_mock_data
-            return num_deleted
+            return await num_deleted
