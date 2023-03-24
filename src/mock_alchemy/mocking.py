@@ -212,212 +212,6 @@ class UnifiedAlchemyMagicMock(AlchemyMagicMock):
     """A MagicMock that combines SQLALchemy to mock a session.
 
     MagicMock which unifies common SQLALchemy session functions for easier assertions.
-
-    Attributes:
-        boundary: A dict of SQLAlchemy functions or statements that get
-            or retreive data from calls. This dictionary has values
-            that are the callable functions to process the function calls.
-        unify: A dict of SQLAlchemy functions or statements that are to
-            unifying expressions together. This dictionary has values
-            that are the callable functions to process the function calls. Note
-            that across query calls data and, as such, these calls are not unified.
-            Check out the examples for this class for more detail about this
-            limitation.
-        mutate: A set of operations that mutate data. The currently supported
-            operations include ``.delete()``, ``.add()``, and ``.add_all()``.
-            More operations are planned and this is a future area of work.
-
-    For example::
-
-        >>> from sqlalchemy.sql.expression import column
-        >>> c = column('column')
-
-        >>> s = UnifiedAlchemyMagicMock()
-        >>> s.query(None).filter(c == 'one').filter(c == 'two').all()
-        []
-        >>> s.query(None).filter(c == 'three').filter(c == 'four').all()
-        []
-        >>> s.filter.call_count
-        2
-        >>> s.filter.assert_any_call(c == 'one', c == 'two')
-        >>> s.filter.assert_any_call(c == 'three', c == 'four')
-
-    In addition, mock data be specified to stub real DB interactions.
-    Result-sets are specified per filtering criteria so that unique data
-    can be returned depending on query/filter/options criteria.
-    Data is given as a list of ``(criteria, result)`` tuples where ``criteria``
-    is a list of calls.
-    Reason for passing data as a list vs a dict is that calls and SQLAlchemy
-    expressions are not hashable hence cannot be dict keys.
-
-    For example::
-
-        >>> from sqlalchemy import Column, Integer, String
-        >>> from sqlalchemy.ext.declarative import declarative_base
-
-        >>> Base = declarative_base()
-
-        >>> class SomeClass(Base):
-        ...     __tablename__ = 'some_table'
-        ...     pk1 = Column(Integer, primary_key=True)
-        ...     pk2 = Column(Integer, primary_key=True)
-        ...     name =  Column(String(50))
-        ...     def __repr__(self):
-        ...         return str(self.pk1)
-
-        >>> s = UnifiedAlchemyMagicMock(data=[
-        ...     (
-        ...         [mock.call.query('foo'),
-        ...          mock.call.filter(c == 'one', c == 'two')],
-        ...         [SomeClass(pk1=1, pk2=1), SomeClass(pk1=2, pk2=2)]
-        ...     ),
-        ...     (
-        ...         [mock.call.query('foo'),
-        ...          mock.call.filter(c == 'one', c == 'two'),
-        ...          mock.call.order_by(c)],
-        ...         [SomeClass(pk1=2, pk2=2), SomeClass(pk1=1, pk2=1)]
-        ...     ),
-        ...     (
-        ...         [mock.call.filter(c == 'three')],
-        ...         [SomeClass(pk1=3, pk2=3)]
-        ...     ),
-        ... ])
-
-        # .all()
-        >>> s.query('foo').filter(c == 'one').filter(c == 'two').all()
-        [1, 2]
-        >>> s.query('bar').filter(c == 'one').filter(c == 'two').all()
-        []
-        >>> s.query('foo').filter(c == 'one').filter(c == 'two').order_by(c).all()
-        [2, 1]
-        >>> s.query('foo').filter(c == 'one').filter(c == 'three').order_by(c).all()
-        []
-        >>> s.query('foo').filter(c == 'three').all()
-        [3]
-        >>> s.query(None).filter(c == 'four').all()
-        []
-
-        # .iter()
-        >>> list(s.query('foo').filter(c == 'two').filter(c == 'one'))
-        [1, 2]
-
-        # .count()
-        >>> s.query('foo').filter(c == 'two').filter(c == 'one').count()
-        2
-
-        # .first()
-        >>> s.query('foo').filter(c == 'one').filter(c == 'two').first()
-        1
-        >>> s.query('bar').filter(c == 'one').filter(c == 'two').first()
-
-        # .one() and scalar
-        >>> s.query('foo').filter(c == 'three').one()
-        3
-        >>> s.query('foo').filter(c == 'three').scalar()
-        3
-        >>> s.query('bar').filter(c == 'one').filter(c == 'two').one_or_none()
-
-        # .get()
-        >>> s.query('foo').get((1, 1))
-        1
-        >>> s.query('foo').get((4, 4))
-        >>> s.query('foo').filter(c == 'two').filter(c == 'one').get((1, 1))
-        1
-        >>> s.query('foo').filter(c == 'three').get((1, 1))
-        1
-        >>> s.query('foo').filter(c == 'three').get((4, 4))
-
-        # dynamic session
-        >>> class Model(Base):
-        ...     __tablename__ = 'model_table'
-        ...     pk1 = Column(Integer, primary_key=True)
-        ...     name = Column(String)
-        ...     def __repr__(self):
-        ...         return str(self.pk1)
-        >>> s = UnifiedAlchemyMagicMock()
-        >>> s.add(SomeClass(pk1=1, pk2=1))
-        >>> s.add_all([SomeClass(pk1=2, pk2=2)])
-        >>> s.add_all([SomeClass(pk1=4, pk2=3)])
-        >>> s.add_all([Model(pk1=4, name='some_name')])
-        >>> s.query(SomeClass).all()
-        [1, 2, 4]
-        >>> s.query(SomeClass).get((1, 1))
-        1
-        >>> s.query(SomeClass).get((2, 2))
-        2
-        >>> s.query(SomeClass).get((3, 3))
-        >>> s.query(SomeClass).filter(c == 'one').all()
-        [1, 2, 4]
-        >>> s.query(SomeClass).get((4, 3))
-        4
-        >>> s.query(SomeClass).get({"pk2": 3, "pk1": 4})
-        4
-        >>> s.query(Model).get(4)
-        4
-
-        # .delete()
-        >>> s = UnifiedAlchemyMagicMock(data=[
-        ...     (
-        ...         [mock.call.query('foo'),
-        ...          mock.call.filter(c == 'one', c == 'two')],
-        ...         [SomeClass(pk1=1, pk2=1), SomeClass(pk1=2, pk2=2)]
-        ...     ),
-        ...     (
-        ...         [mock.call.query('foo'),
-        ...          mock.call.filter(c == 'one', c == 'two'),
-        ...          mock.call.order_by(c)],
-        ...         [SomeClass(pk1=2, pk2=2), SomeClass(pk1=1, pk2=1)]
-        ...     ),
-        ...     (
-        ...         [mock.call.filter(c == 'three')],
-        ...         [SomeClass(pk1=3, pk2=3)]
-        ...     ),
-        ...     (
-        ...         [mock.call.query('foo'),
-        ...          mock.call.filter(
-        ...             c == 'one',
-        ...             c == 'two',
-        ...             c == 'three',
-        ...         )],
-        ...         [
-        ...             SomeClass(pk1=1, pk2=1),
-        ...             SomeClass(pk1=2, pk2=2),
-        ...             SomeClass(pk1=3, pk2=3),
-        ...         ]
-        ...     ),
-        ... ])
-
-        >>> s.query('foo').filter(c == 'three').all()
-        [3]
-        >>> s.query('foo').all()
-        []
-        >>> s.query('foo').filter(c == 'three').delete()
-        1
-        >>> s.query('foo').filter(c == 'three').all()
-        []
-        >>> s.query('foo').filter(c == 'one').filter(c == 'two').all()
-        [1, 2]
-        >>> a = s.query('foo').filter(c == 'one').filter(c == 'two')
-        >>> a.filter(c == 'three').all()
-        [1, 2, 3]
-        >>> s = UnifiedAlchemyMagicMock()
-        >>> s.add(SomeClass(pk1=1, pk2=1))
-        >>> s.add_all([SomeClass(pk1=2, pk2=2)])
-        >>> s.query(SomeClass).all()
-        [1, 2]
-        >>> s.query(SomeClass).delete()
-        2
-        >>> s.query(SomeClass).all()
-        []
-        >>> s = UnifiedAlchemyMagicMock()
-        >>> s.add_all([SomeClass(pk1=2, pk2=2)])
-        >>> s.query(SomeClass).delete()
-        1
-        >>> s.query(SomeClass).delete()
-        0
-        >>> s.query(SomeClass).scalar()
-        None
-
     Also note that only within same query functions are unified.
     After ``.all()`` is called or query is iterated over, future queries
     are not unified.
@@ -629,7 +423,8 @@ class UnifiedAlchemyMagicMock(AlchemyMagicMock):
         _mock_data = self._mock_data = self._mock_data or []
         if _mock_name == "add":
             to_add = args[0]
-            query_call = mock.call.query(type(to_add))
+            # query_call = mock.call.query(type(to_add))
+            query_call = mock.call.execute(type(to_add))
 
             mocked_data = next(
                 iter(filter(lambda i: i[0] == [query_call], _mock_data)), None
@@ -975,7 +770,7 @@ class AsyncUnifiedAlchemyMagicMock(AsyncAlchemyMagicMock):
         _mock_data = self._mock_data = self._mock_data or []
         if _mock_name == "add":
             to_add = args[0]
-            query_call = mock.call.query(type(to_add))
+            query_call = mock.call.execute(type(to_add))
 
             mocked_data = next(
                 iter(filter(lambda i: i[0] == [query_call], _mock_data)), None
