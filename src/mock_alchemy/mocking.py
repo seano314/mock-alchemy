@@ -633,14 +633,14 @@ class AsyncUnifiedAlchemyMagicMock(AsyncAlchemyMagicMock):
         kwargs["_mock_data"] = kwargs.pop("data", None)
         kwargs.update(
             {
-                k: AsyncAlchemyMagicMock(side_effect=partial(self._get_data, _mock_name=k))
+                k: AlchemyMagicMock(side_effect=partial(self._get_data, _mock_name=k))
                 for k in self.boundary
             }
         )
 
         kwargs.update(
             {
-                k: AsyncAlchemyMagicMock(
+                k: AlchemyMagicMock(
                     return_value=self,
                     side_effect=partial(self._unify, _mock_name=k),
                 )
@@ -650,7 +650,7 @@ class AsyncUnifiedAlchemyMagicMock(AsyncAlchemyMagicMock):
 
         kwargs.update(
             {
-                k: AsyncAlchemyMagicMock(
+                k: AlchemyMagicMock(
                     return_value=None,
                     side_effect=partial(self._mutate_data, _mock_name=k),
                 )
