@@ -389,6 +389,8 @@ class UnifiedAlchemyMagicMock(AlchemyMagicMock):
                 for i in self._get_previous_calls(self.mock_calls[:-1])
             ]
             sorted_mock_data = sorted(_mock_data, key=lambda x: len(x[0]), reverse=True)
+            print('----previous_calls')
+            print(previous_calls)
             if _mock_name == "get":
                 query_call = [c for c in previous_calls if c[0] in ["query", "execute"]][0]
                 results = list(
@@ -735,6 +737,8 @@ class AsyncUnifiedAlchemyMagicMock(AsyncAlchemyMagicMock):
                 )
                 for i in self._get_previous_calls(self.mock_calls[:-1])
             ]
+            print('----previous_calls')
+            print(previous_calls)
             sorted_mock_data = sorted(_mock_data, key=lambda x: len(x[0]), reverse=True)
             if _mock_name == "get":
                 query_call = [c for c in previous_calls if c[0] in ["query", "execute"]][0]
