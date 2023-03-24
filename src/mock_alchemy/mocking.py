@@ -831,7 +831,7 @@ class AsyncUnifiedAlchemyMagicMock(AsyncAlchemyMagicMock):
         ...  # pragma: no cover
 
     def __init__(self, *args, **kwargs) -> None:
-        """Creates an UnifiedAlchemyMagicMock to mock a SQLAlchemy session."""
+        """Creates an AsyncUnifiedAlchemyMagicMock to mock a SQLAlchemy session."""
         kwargs["_mock_default"] = kwargs.pop("default", [])
         kwargs["_mock_data"] = kwargs.pop("data", None)
         kwargs.update(
@@ -861,7 +861,7 @@ class AsyncUnifiedAlchemyMagicMock(AsyncAlchemyMagicMock):
             }
         )
 
-        super(UnifiedAlchemyMagicMock, self).__init__(*args, **kwargs)
+        super(AsyncUnifiedAlchemyMagicMock, self).__init__(*args, **kwargs)
 
     async def _get_previous_calls(self, calls: Sequence[Call]) -> Iterator:
         """Gets the previous calls on the same line."""
