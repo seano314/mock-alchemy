@@ -544,7 +544,7 @@ class UnifiedAlchemyMagicMock(AlchemyMagicMock):
     ) -> None:
         ...  # pragma: no cover
 
-    def _unify(self, *args, **kwargs) -> Any:
+    async def _unify(self, *args, **kwargs) -> Any:
         """Unify the SQLAlchemy expressions."""
         _mock_name = kwargs.pop("_mock_name")
         submock = getattr(self, _mock_name)
@@ -580,7 +580,7 @@ class UnifiedAlchemyMagicMock(AlchemyMagicMock):
         self.method_calls.append(Call((name, args, kwargs)))
         self.mock_calls.append(Call((name, args, kwargs)))
 
-        return submock.return_value
+        return await submock.return_value
 
     def _get_data(self, *args: Any, **kwargs: Any) -> Any:
         """Get the data for the SQLAlchemy expression."""
