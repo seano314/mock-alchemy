@@ -872,7 +872,7 @@ class AsyncUnifiedAlchemyMagicMock(AsyncAlchemyMagicMock):
     async def _get_previous_call(self, name: str, calls: Sequence[Call]) -> Optional[Call]:
         """Gets the previous call right before the current call."""
         # get all previous session calls within same session query
-        previous_calls = self._get_previous_calls(calls)
+        previous_calls = await self._get_previous_calls(calls)
 
         # skip last call
         next(previous_calls)
@@ -895,8 +895,8 @@ class AsyncUnifiedAlchemyMagicMock(AsyncAlchemyMagicMock):
         _mock_name = kwargs.pop("_mock_name")
         submock = getattr(self, _mock_name)
 
-        previous_method_call = self._get_previous_call(_mock_name, self.method_calls)
-        previous_mock_call = self._get_previous_call(_mock_name, self.mock_calls)
+        previous_method_call = await self._get_previous_call(_mock_name, self.method_calls)
+        previous_mock_call = await self._get_previous_call(_mock_name, self.mock_calls)
 
         if previous_mock_call is None:
             return await submock.return_value
@@ -938,7 +938,7 @@ class AsyncUnifiedAlchemyMagicMock(AsyncAlchemyMagicMock):
                 await sqlalchemy_call(
                     i, with_name=True, base_call=self.unify.get(i[0]) or Call
                 )
-                for i in self._get_previous_calls(self.mock_calls[:-1])
+                for i in await self._get_previous_calls(self.mock_calls[:-1])
             ]
             sorted_mock_data = sorted(_mock_data, key=lambda x: len(x[0]), reverse=True)
             if _mock_name == "get":
