@@ -747,7 +747,7 @@ class AsyncAlchemyMagicMock(mock.AsyncMock):
     async def assert_any_call(self, *args: Any, **kwargs: Any) -> None:
         """Assert for a specific call to have happened."""
         args, kwargs = sqlalchemy_call(mock.call(*args, **kwargs))
-        with await setattr_tmp(
+        with setattr_tmp(
             self,
             "call_args_list",
             [sqlalchemy_call(i) for i in self.call_args_list],
@@ -757,7 +757,7 @@ class AsyncAlchemyMagicMock(mock.AsyncMock):
     async def assert_has_calls(self, calls: List[Call], any_order: bool = False) -> None:
         """Assert for a list of calls to have happened."""
         calls = [sqlalchemy_call(i) for i in calls]
-        with await setattr_tmp(
+        with setattr_tmp(
             self,
             "mock_calls",
             type(self.mock_calls)([sqlalchemy_call(i) for i in self.mock_calls]),
@@ -890,7 +890,7 @@ class AsyncUnifiedAlchemyMagicMock(AsyncAlchemyMagicMock):
     ) -> None:
         ...  # pragma: no cover
 
-    async def _unify(self, *args, **kwargs) -> Any:
+    def _unify(self, *args, **kwargs) -> Any:
         """Unify the SQLAlchemy expressions."""
         _mock_name = kwargs.pop("_mock_name")
         submock = getattr(self, _mock_name)
@@ -926,7 +926,7 @@ class AsyncUnifiedAlchemyMagicMock(AsyncAlchemyMagicMock):
         self.method_calls.append(Call((name, args, kwargs)))
         self.mock_calls.append(Call((name, args, kwargs)))
 
-        return await submock.return_value
+        return submock.return_value
 
     async def _get_data(self, *args: Any, **kwargs: Any) -> Any:
         """Get the data for the SQLAlchemy expression."""
