@@ -110,6 +110,12 @@ def sqlalchemy_call(call: Call, with_name: bool = False, base_call: Any = Call) 
         >>> isinstance(kwargs['foo'], ExpressionMatcher)
         True
     """
+    print('----call')
+    print(call)
+    print('----with_name')
+    print(with_name)
+    print('----with_name')
+    print(base_call)
     try:
         args, kwargs = call
     except ValueError:
@@ -730,6 +736,8 @@ class AsyncUnifiedAlchemyMagicMock(AsyncAlchemyMagicMock):
         _mock_name = kwargs.pop("_mock_name")
         _mock_default = self._mock_default
         _mock_data = self._mock_data
+        print('---_mock_name in _get_data')
+        print(_mock_name)
         if _mock_data is not None:
             previous_calls = [
                 sqlalchemy_call(
@@ -737,7 +745,13 @@ class AsyncUnifiedAlchemyMagicMock(AsyncAlchemyMagicMock):
                 )
                 for i in self._get_previous_calls(self.mock_calls[:-1])
             ]
+            print('----previous_calls ')
+            print(previous_calls)
             sorted_mock_data = sorted(_mock_data, key=lambda x: len(x[0]), reverse=True)
+            print('---sorted_mock_data in _get_data')
+            print(sorted_mock_data)
+            print('----query_call')
+            print([c for c in previous_calls if c[0] in ["query", "execute"]][0])
             if _mock_name == "get":
                 query_call = [c for c in previous_calls if c[0] in ["query", "execute"]][0]
                 results = list(
