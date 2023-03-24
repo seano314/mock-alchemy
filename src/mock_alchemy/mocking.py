@@ -733,18 +733,18 @@ class AsyncAlchemyMagicMock(mock.AsyncMock):
         kwargs.setdefault("__name__", "Session")
         super(AsyncAlchemyMagicMock, self).__init__(*args, **kwargs)
 
-    async def _format_mock_call_signature(self, args: Any, kwargs: Any) -> str:
+    def _format_mock_call_signature(self, args: Any, kwargs: Any) -> str:
         """Formats the mock call into a string."""
         name = self._mock_name or "mock"
         args, kwargs = sqlalchemy_call(mock.call(*args, **kwargs))
-        return await mock._format_call_signature(name, args, kwargs)
+        return mock._format_call_signature(name, args, kwargs)
 
-    async def assert_called_with(self, *args: Any, **kwargs: Any) -> None:
+    def assert_called_with(self, *args: Any, **kwargs: Any) -> None:
         """Assert for a specific call to have happened."""
         args, kwargs = sqlalchemy_call(mock.call(*args, **kwargs))
-        return await super(AsyncAlchemyMagicMock, self).assert_called_with(*args, **kwargs)
+        return super(AsyncAlchemyMagicMock, self).assert_called_with(*args, **kwargs)
 
-    async def assert_any_call(self, *args: Any, **kwargs: Any) -> None:
+    def assert_any_call(self, *args: Any, **kwargs: Any) -> None:
         """Assert for a specific call to have happened."""
         args, kwargs = sqlalchemy_call(mock.call(*args, **kwargs))
         with setattr_tmp(
@@ -752,9 +752,9 @@ class AsyncAlchemyMagicMock(mock.AsyncMock):
             "call_args_list",
             [sqlalchemy_call(i) for i in self.call_args_list],
         ):
-            return await super(AsyncAlchemyMagicMock, self).assert_any_call(*args, **kwargs)
+            return super(AsyncAlchemyMagicMock, self).assert_any_call(*args, **kwargs)
 
-    async def assert_has_calls(self, calls: List[Call], any_order: bool = False) -> None:
+    def assert_has_calls(self, calls: List[Call], any_order: bool = False) -> None:
         """Assert for a list of calls to have happened."""
         calls = [sqlalchemy_call(i) for i in calls]
         with setattr_tmp(
@@ -762,7 +762,7 @@ class AsyncAlchemyMagicMock(mock.AsyncMock):
             "mock_calls",
             type(self.mock_calls)([sqlalchemy_call(i) for i in self.mock_calls]),
         ):
-            return await super(AsyncAlchemyMagicMock, self).assert_has_calls(calls, any_order)
+            return super(AsyncAlchemyMagicMock, self).assert_has_calls(calls, any_order)
 
 
 class AsyncUnifiedAlchemyMagicMock(AsyncAlchemyMagicMock):
@@ -928,7 +928,7 @@ class AsyncUnifiedAlchemyMagicMock(AsyncAlchemyMagicMock):
 
         return submock.return_value
 
-    async def _get_data(self, *args: Any, **kwargs: Any) -> Any:
+    def _get_data(self, *args: Any, **kwargs: Any) -> Any:
         """Get the data for the SQLAlchemy expression."""
         _mock_name = kwargs.pop("_mock_name")
         _mock_default = self._mock_default
@@ -967,9 +967,9 @@ class AsyncUnifiedAlchemyMagicMock(AsyncAlchemyMagicMock):
                     if all(c in previous_calls for c in calls):
                         return self.boundary[_mock_name](result, *args, **kwargs)
 
-        return await self.boundary[_mock_name](_mock_default, *args, **kwargs)
+        return self.boundary[_mock_name](_mock_default, *args, **kwargs)
 
-    async def _mutate_data(self, *args: Any, **kwargs: Any) -> Optional[int]:
+    def _mutate_data(self, *args: Any, **kwargs: Any) -> Optional[int]:
         """Alter the data for the SQLAlchemy expression."""
         _mock_name = kwargs.get("_mock_name")
         _mock_data = self._mock_data = self._mock_data or []
@@ -1025,4 +1025,4 @@ class AsyncUnifiedAlchemyMagicMock(AsyncAlchemyMagicMock):
                 else:
                     temp_mock_data.append((calls, result))
             self._mock_data = temp_mock_data
-            return await num_deleted
+            return num_deleted
