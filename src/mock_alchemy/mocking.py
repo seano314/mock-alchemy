@@ -126,7 +126,7 @@ def sqlalchemy_call(call: Call, with_name: bool = False, base_call: Any = Call) 
         return base_call((args, kwargs), two=True)
 
 
-class AlchemyMagicMock(mock.AsyncMock):
+class AlchemyMagicMock(mock.MagicMock):
     """Compares SQLAlchemy expressions for simple asserts.
 
     MagicMock for SQLAlchemy which can compare alchemys expressions in assertions.
@@ -172,6 +172,8 @@ class AlchemyMagicMock(mock.AsyncMock):
         **kwargs: Any,
     ) -> None:
         ...  # pragma: no cover
+    async def __call__(self, *args, **kwargs):
+        return super(mock.AsyncMock, self).__call__(*args, **kwargs)
 
     def __init__(self, *args, **kwargs) -> None:
         """Creates AlchemyMagicMock that can be used as limited SQLAlchemy session."""
